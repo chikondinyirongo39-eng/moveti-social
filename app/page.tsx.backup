@@ -1,0 +1,79 @@
+"use client";
+
+export default function Home() {
+  return (
+    <main style={{
+      minHeight: "100vh",
+      background: "#07090d",
+      color: "white",
+      fontFamily: "Arial, sans-serif",
+      padding: "24px"
+    }}>
+      <header style={{
+        maxWidth: "900px",
+        margin: "0 auto",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
+        <h1>MOVETI</h1>
+
+        <button
+          onClick={() => window.location.href = "/login"}
+          style={{
+            padding: "10px 18px",
+            borderRadius: "22px",
+            border: "1px solid #444",
+            background: "transparent",
+            color: "white"
+          }}
+        >
+          Log in
+        </button>
+      </header>
+
+      <section style={{
+        maxWidth: "800px",
+        margin: "100px auto",
+        textAlign: "center"
+      }}>
+        <p style={{ color: "#aaa" }}>
+          MUSIC • VIDEOS • CREATORS • COMMUNITY
+        </p>
+
+        <h2 style={{
+          fontSize: "clamp(40px, 9vw, 72px)"
+        }}>
+          Your sound.<br />
+          Your videos.<br />
+          Your community.
+        </h2>
+
+        <p style={{
+          color: "#aaa",
+          fontSize: "18px",
+          lineHeight: 1.6
+        }}>
+          Share music, create videos, connect with fans,
+          and build your audience on MOVETI Social.
+        </p>
+
+        <button
+          onClick={() => window.location.href = "/signup"}
+          style={{
+            marginTop: "25px",
+            padding: "15px 28px",
+            borderRadius: "28px",
+            border: 0,
+            background: "white",
+            color: "black",
+            fontWeight: "bold",
+            fontSize: "16px"
+          }}
+        >
+          Create account
+        </button>
+      </section>
+    </main>
+  );
+}
