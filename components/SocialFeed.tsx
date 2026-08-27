@@ -293,7 +293,7 @@ export default function SocialFeed({
 
             <p className="mt-3 text-xs text-gray-400">
               {post.created_at
-                ? new Date(post.created_at).toLocaleString()
+                ? new Date(post.created_at).toISOString().slice(0, 16).replace('T', ' ')
                 : ''}
             </p>
 
