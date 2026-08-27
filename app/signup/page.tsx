@@ -1,27 +1,21 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { createClient } from "../../lib/supabase";
+import { useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase';
 
 export default function Signup() {
-  const supabase = createClient();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
   async function signup(e: React.FormEvent) {
     e.preventDefault();
-    setMessage("Creating your account...");
+    setMessage('Creating account...');
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await createClient().auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          name,
-        },
-      },
     });
 
     if (error) {
@@ -29,129 +23,46 @@ export default function Signup() {
       return;
     }
 
-    if (data.user) {
-      setMessage(
-        "Account created successfully! Check your email if confirmation is required."
-      );
-    }
+    setMessage('Account created. Check your email to confirm it.');
   }
 
   return (
-    <main style={pageStyle}>
-      <div style={cardStyle}>
-        <h1>✨ Create Your MOVETI Account</h1>
+    <main className="min-h-screen bg-black p-6 text-white">
+      <div className="mx-auto max-w-md pt-16">
+        <Link href="/" className="text-3xl font-black">MOVETI</Link>
+        <h1 className="mt-10 text-3xl font-bold">Create account</h1>
 
-        <p style={{ color: "#9da5b2" }}>
-          Create your account to continue.
-        </p>
-
-        <form onSubmit={signup}>
-          <label>Name</label>
+        <form onSubmit={signup} className="mt-6 space-y-4">
           <input
-            required
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
-            style={inputStyle}
-          />
-
-          <label>Email</label>
-          <input
-            required
+            className="w-full rounded-xl bg-white p-3 text-black"
+            placeholder="Email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            style={inputStyle}
-          />
-
-          <label>Password</label>
-          <input
+            onChange={e => setEmail(e.target.value)}
             required
-            type="password"
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Create a strong password"
-            style={inputStyle}
           />
 
-          <button type="submit" style={buttonStyle}>
+          <input
+            className="w-full rounded-xl bg-white p-3 text-black"
+            placeholder="Password"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            minLength={6}
+            required
+          />
+
+          <button className="w-full rounded-xl bg-white p-3 font-bold text-black">
             Create Account
           </button>
         </form>
 
-        {message && (
-          <div style={messageStyle}>
-            {message}
-          </div>
-        )}
+        {message && <p className="mt-4 text-sm text-gray-300">{message}</p>}
 
-        <button
-          onClick={() => (window.location.href = "/login")}
-          style={linkButton}
-        >
+        <Link href="/login" className="mt-6 block text-gray-400">
           Already have an account? Log in
-        </button>
+        </Link>
       </div>
     </main>
   );
 }
-
-const pageStyle = {
-  minHeight: "100vh",
-  background: "#07090d",
-  color: "white",
-  padding: "30px",
-  fontFamily: "Arial, sans-serif",
-};
-
-const cardStyle = {
-  maxWidth: "500px",
-  margin: "0 auto",
-  padding: "30px",
-  background: "#11151c",
-  borderRadius: "20px",
-};
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box" as const,
-  padding: "14px",
-  marginTop: "8px",
-  marginBottom: "20px",
-  borderRadius: "12px",
-  border: "1px solid #333",
-  background: "#181d25",
-  color: "white",
-  fontSize: "16px",
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "16px",
-  borderRadius: "14px",
-  border: "none",
-  background: "white",
-  color: "black",
-  fontWeight: "bold" as const,
-  fontSize: "16px",
-};
-
-const messageStyle = {
-  marginTop: "20px",
-  padding: "15px",
-  background: "#181d25",
-  borderRadius: "12px",
-};
-
-const linkButton = {
-  width: "100%",
-  marginTop: "18px",
-  padding: "12px",
-  border: "none",
-  background: "transparent",
-  color: "#aaa",
-  fontSize: "15px",
-};

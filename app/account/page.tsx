@@ -1,174 +1,58 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function Account() {
-  const [artist, setArtist] = useState("");
-  const [email, setEmail] = useState("");
-  const [country, setCountry] = useState("");
-  const [bio, setBio] = useState("");
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    const savedProfile = localStorage.getItem("moveti_artist_profile");
-
-    if (savedProfile) {
-      const profile = JSON.parse(savedProfile);
-      setArtist(profile.artist || "");
-      setEmail(profile.email || "");
-      setCountry(profile.country || "");
-      setBio(profile.bio || "");
-    }
-  }, []);
-
-  function saveProfile() {
-    const profile = {
-      artist,
-      email,
-      country,
-      bio
-    };
-
-    localStorage.setItem(
-      "moveti_artist_profile",
-      JSON.stringify(profile)
-    );
-
-    setSaved(true);
-  }
-
   return (
-    <main style={pageStyle}>
-      <div style={containerStyle}>
+    <main className="min-h-screen bg-[#f5f6f8] text-[#111]">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
+          <Link href="/" className="text-2xl font-black">MOVETI</Link>
+          <Link href="/dashboard" className="text-sm font-bold">Dashboard</Link>
+        </div>
+      </header>
 
-        <button
-          onClick={() => window.location.href = "/dashboard"}
-          style={backStyle}
-        >
-          ← Dashboard
-        </button>
+      <section className="mx-auto max-w-4xl px-4 py-8">
+        <div className="rounded-3xl bg-black p-7 text-white">
+          <div className="grid h-20 w-20 place-items-center rounded-full bg-white text-2xl font-black text-black">
+            A
+          </div>
+          <h1 className="mt-4 text-3xl font-black">Astravet CN</h1>
+          <p className="text-gray-300">@astravetcn</p>
+          <p className="mt-3 text-sm text-gray-300">Artist & Creator</p>
+        </div>
 
-        <h1>👤 My Account</h1>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-gray-500">Followers</p>
+            <b className="text-2xl">27K</b>
+          </div>
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-gray-500">Posts</p>
+            <b className="text-2xl">61</b>
+          </div>
+          <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-gray-500">Earnings</p>
+            <b className="text-2xl">K0.00</b>
+          </div>
+        </div>
 
-        <p style={{ color: "#9da5b2" }}>
-          Manage your MOVETI artist information.
-        </p>
-
-        <section style={cardStyle}>
-
-          <label>Artist Name</label>
-          <input
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-            placeholder="Your artist name"
-            style={inputStyle}
-          />
-
-          <label>Email</label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Your email"
-            type="email"
-            style={inputStyle}
-          />
-
-          <label>Country</label>
-          <input
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="Malawi"
-            style={inputStyle}
-          />
-
-          <label>Artist Bio</label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="Tell listeners about yourself..."
-            style={{
-              ...inputStyle,
-              minHeight: "120px"
-            }}
-          />
-
-          <button
-            onClick={saveProfile}
-            style={buttonStyle}
-          >
-            Save Profile
-          </button>
-
-          {saved && (
-            <div style={successStyle}>
-              ✅ Profile saved successfully!
-            </div>
-          )}
-
-        </section>
-      </div>
+        <div className="mt-6 space-y-3">
+          <Link href="/dashboard" className="block rounded-2xl bg-white p-5 font-bold shadow-sm">
+            📊 Creator Dashboard
+          </Link>
+          <Link href="/payment" className="block rounded-2xl bg-white p-5 font-bold shadow-sm">
+            💰 Payments & Payouts
+          </Link>
+          <Link href="/releases" className="block rounded-2xl bg-white p-5 font-bold shadow-sm">
+            🎵 My Music
+          </Link>
+          <Link href="/profiles" className="block rounded-2xl bg-white p-5 font-bold shadow-sm">
+            👤 View Profile
+          </Link>
+          <Link href="/login" className="block rounded-2xl bg-white p-5 font-bold text-red-600 shadow-sm">
+            Log out
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }
-
-const pageStyle = {
-  minHeight: "100vh",
-  background: "#07090d",
-  color: "white",
-  padding: "30px",
-  fontFamily: "Arial, sans-serif",
-  boxSizing: "border-box" as const
-};
-
-const containerStyle = {
-  maxWidth: "650px",
-  margin: "0 auto"
-};
-
-const cardStyle = {
-  marginTop: "25px",
-  padding: "25px",
-  background: "#11151c",
-  border: "1px solid #252b35",
-  borderRadius: "20px"
-};
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box" as const,
-  padding: "14px",
-  marginTop: "8px",
-  marginBottom: "20px",
-  borderRadius: "12px",
-  border: "1px solid #333",
-  background: "#181d25",
-  color: "white",
-  fontSize: "16px"
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "16px",
-  borderRadius: "14px",
-  border: "none",
-  background: "white",
-  color: "black",
-  fontWeight: "bold" as const,
-  fontSize: "16px"
-};
-
-const backStyle = {
-  padding: "10px 15px",
-  borderRadius: "10px",
-  border: "1px solid #333",
-  background: "#181d25",
-  color: "white",
-  marginBottom: "20px"
-};
-
-const successStyle = {
-  marginTop: "20px",
-  padding: "16px",
-  background: "#17251c",
-  borderRadius: "12px"
-};

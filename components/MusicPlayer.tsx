@@ -1,149 +1,125 @@
-"use client";
+'use client';
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-type MusicPlayerProps = {
-  title?: string;
+type Track = {
+  id?: number;
+  title: string;
   artist?: string;
-  audioUrl?: string;
+  cover_url?: string;
+  audio_url?: string;
 };
 
 export default function MusicPlayer({
-  title = "No song selected",
-  artist = "MOVETI",
-  audioUrl = "",
-}: MusicPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  tracks = [],
+  title,
+  artist,
+  audioUrl,
+  coverUrl
+}: {
+  tracks?: Track[];
+  title?: string;
+  artist?: string;
+  audioUrl?: string;
+  coverUrl?: string;
+}) {
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [progress, setProgress] = useState(0);
 
-  const togglePlay = async () => {
-    const audio = audioRef.current;
-    if (!audio || !audioUrl) return;
+  const track = tracks[0] || {
+    title: title || 'MOVETI Music',
+    artist: artist || 'Artist',
+    audio_url: audioUrl,
+    cover_url: coverUrl
+  };
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.load();
+    }
+    setPlaying(false);
+    setProgress(0);
+  }, [track.audio_url]);
+
+  async function togglePlay() {
+    if (!audioRef.current || !track.audio_url) return;
 
     if (playing) {
-      audio.pause();
-      setPlaying(false);
+      audioRef.current.pause();
     } else {
-      await audio.play();
-      setPlaying(true);
+      await audioRef.current.play();
     }
-  };
+  }
 
-  const formatTime = (seconds: number) => {
-    if (!Number.isFinite(seconds)) return "0:00";
-    const minutes = Math.floor(seconds / 60);
-    const remaining = Math.floor(seconds % 60);
-    return `${minutes}:${remaining.toString().padStart(2, "0")}`;
-  };
+  function updateProgress() {
+    const audio = audioRef.current;
+    if (audio?.duration) {
+      setProgress((audio.currentTime / audio.duration) * 100);
+    }
+  }
+
+  function seek(value: number) {
+    const audio = audioRef.current;
+    if (audio?.duration) {
+      audio.currentTime = (value / 100) * audio.duration;
+      setProgress(value);
+    }
+  }
 
   return (
-    <div style={{
-      position: "fixed",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 1000,
-      background: "#111",
-      color: "#fff",
-      padding: "12px 16px",
-      boxShadow: "0 -4px 20px rgba(0,0,0,0.2)"
-    }}>
-      {audioUrl && (
-        <audio
-          ref={audioRef}
-          src={audioUrl}
-          onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-          onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
-          onEnded={() => {
-            setPlaying(false);
-            setCurrentTime(0);
-          }}
-        />
-      )}
+    <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <div className="flex items-center gap-4">
+        {track.cover_url ? (
+          <img
+            src={track.cover_url}
+            alt={track.title}
+            className="h-20 w-20 rounded-xl object-cover"
+          />
+        ) : (
+          <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-gray-200 text-3xl">
+            🎵
+          </div>
+        )}
 
-      <div style={{
-        maxWidth: "1100px",
-        margin: "0 auto",
-        display: "flex",
-        alignItems: "center",
-        gap: "12px"
-      }}>
-        <div style={{
-          width: "48px",
-          height: "48px",
-          borderRadius: "8px",
-          background: "#333",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "22px"
-        }}>
-          🎵
-        </div>
-
-        <div style={{ width: "160px", minWidth: 0 }}>
-          <strong>{title}</strong>
-          <div style={{ color: "#aaa", fontSize: "13px" }}>{artist}</div>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-lg font-bold">{track.title}</h2>
+          <p className="truncate text-sm text-gray-500">
+            {track.artist || 'Artist'}
+          </p>
         </div>
 
         <button
           onClick={togglePlay}
-          disabled={!audioUrl}
-          style={{
-            width: "42px",
-            height: "42px",
-            borderRadius: "50%",
-            border: "none",
-            background: "#fff",
-            color: "#111",
-            fontSize: "16px"
-          }}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black text-white"
         >
-          {playing ? "Ⅱ" : "▶"}
+          {playing ? '⏸' : '▶'}
         </button>
-
-        <span style={{ fontSize: "12px", color: "#aaa" }}>
-          {formatTime(currentTime)}
-        </span>
-
-        <input
-          type="range"
-          min="0"
-          max={duration || 0}
-          step="0.1"
-          value={Math.min(currentTime, duration || 0)}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (audioRef.current) audioRef.current.currentTime = value;
-            setCurrentTime(value);
-          }}
-          disabled={!audioUrl}
-          style={{ flex: 1 }}
-        />
-
-        <span style={{ fontSize: "12px", color: "#aaa" }}>
-          {formatTime(duration)}
-        </span>
-
-        <span>🔊</span>
-
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volume}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (audioRef.current) audioRef.current.volume = value;
-            setVolume(value);
-          }}
-          style={{ width: "80px" }}
-        />
       </div>
+
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value={progress}
+        onChange={(e) => seek(Number(e.target.value))}
+        className="mt-4 w-full"
+      />
+
+      {!track.audio_url && (
+        <p className="mt-2 text-center text-sm text-gray-500">
+          Add an audio URL to play this release.
+        </p>
+      )}
+
+      <audio
+        ref={audioRef}
+        src={track.audio_url || undefined}
+        onTimeUpdate={updateProgress}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
     </div>
   );
 }

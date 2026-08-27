@@ -1,184 +1,47 @@
-"use client";
+import Link from "next/link";
 
-import { useState } from "react";
+const methods = [
+  ["Airtel Money", "Receive earnings through Airtel Money."],
+  ["TNM Mpamba", "Receive earnings through Mpamba."],
+  ["Bank Account", "Receive earnings directly to your bank."],
+];
 
 export default function Payment() {
-  const [method, setMethod] = useState("");
-  const [paid, setPaid] = useState(false);
-
-  function confirmPayment() {
-    if (!method) {
-      alert("Please choose a payment method.");
-      return;
-    }
-
-    localStorage.setItem("moveti_payment_status", "Payment Submitted");
-
-    const releases = JSON.parse(
-      localStorage.getItem("moveti_releases") || "[]"
-    );
-
-    if (releases.length > 0) {
-      const updated = releases.map((release: any, index: number) => {
-        if (index === releases.length - 1) {
-          return {
-            ...release,
-            status: "Under Review",
-            paymentStatus: "Payment Submitted",
-            paymentMethod: method
-          };
-        }
-
-        return release;
-      });
-
-      localStorage.setItem(
-        "moveti_releases",
-        JSON.stringify(updated)
-      );
-    }
-
-    setPaid(true);
-  }
-
   return (
-    <main style={{
-      minHeight: "100vh",
-      background: "#07090d",
-      color: "white",
-      fontFamily: "Arial, sans-serif",
-      padding: "24px"
-    }}>
-      <div style={{
-        maxWidth: "650px",
-        margin: "0 auto"
-      }}>
-        <h1>💳 MOVETI Payment</h1>
+    <main className="min-h-screen bg-[#f5f6f8] text-[#111]">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+          <Link href="/" className="text-2xl font-black">MOVETI</Link>
+          <Link href="/dashboard" className="text-sm font-bold">Dashboard</Link>
+        </div>
+      </header>
 
-        <p style={{ color: "#9da5b2" }}>
-          Complete the distribution payment for your release.
-        </p>
+      <section className="mx-auto max-w-4xl px-4 py-10">
+        <h1 className="text-3xl font-black">Payments</h1>
+        <p className="mt-2 text-gray-500">Manage your creator earnings and payout method.</p>
 
-        <section style={{
-          marginTop: "25px",
-          padding: "25px",
-          background: "#11151c",
-          border: "1px solid #252b35",
-          borderRadius: "20px"
-        }}>
-          <h2>Single Distribution</h2>
+        <div className="mt-7 rounded-3xl bg-black p-7 text-white">
+          <p className="text-sm text-gray-300">Available earnings</p>
+          <p className="mt-2 text-4xl font-black">K0.00</p>
+          <button className="mt-6 rounded-full bg-white px-6 py-3 font-bold text-black">
+            Withdraw
+          </button>
+        </div>
 
-          <div style={{
-            fontSize: "32px",
-            fontWeight: "bold",
-            margin: "20px 0"
-          }}>
-            K5,000
-          </div>
+        <h2 className="mt-8 text-xl font-black">Payout method</h2>
 
-          <p style={{ color: "#9da5b2" }}>
-            Royalty split
-          </p>
-
-          <p>
-            <strong>95% Artist</strong> / <strong>5% MOVETI</strong>
-          </p>
-
-          <h3 style={{ marginTop: "30px" }}>
-            Choose payment method
-          </h3>
-
-          <label style={optionStyle}>
-            <input
-              type="radio"
-              name="payment"
-              value="Airtel Money"
-              onChange={(e) => setMethod(e.target.value)}
-            />
-            📱 Airtel Money
-          </label>
-
-          <label style={optionStyle}>
-            <input
-              type="radio"
-              name="payment"
-              value="TNM Mpamba"
-              onChange={(e) => setMethod(e.target.value)}
-            />
-            📱 TNM Mpamba
-          </label>
-
-          <label style={optionStyle}>
-            <input
-              type="radio"
-              name="payment"
-              value="Bank"
-              onChange={(e) => setMethod(e.target.value)}
-            />
-            🏦 Bank payment
-          </label>
-
-          {!paid ? (
+        <div className="mt-4 space-y-4">
+          {methods.map(([name, text]) => (
             <button
-              onClick={confirmPayment}
-              style={buttonStyle}
+              key={name}
+              className="w-full rounded-2xl bg-white p-5 text-left shadow-sm hover:shadow-md"
             >
-              Confirm Payment
+              <strong>{name}</strong>
+              <p className="mt-1 text-sm text-gray-500">{text}</p>
             </button>
-          ) : (
-            <div style={{
-              marginTop: "20px",
-              padding: "20px",
-              background: "#17251c",
-              borderRadius: "14px"
-            }}>
-              <h2>✅ Payment Submitted</h2>
-
-              <p>
-                Method: <strong>{method}</strong>
-              </p>
-
-              <p>
-                Amount: <strong>K5,000</strong>
-              </p>
-
-              <p style={{ color: "#9da5b2" }}>
-                Your release is now waiting for payment verification.
-              </p>
-
-              <button
-                onClick={() => window.location.href = "/releases"}
-                style={buttonStyle}
-              >
-                View My Releases
-              </button>
-            </div>
-          )}
-        </section>
-      </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
-
-const optionStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  padding: "16px",
-  marginBottom: "12px",
-  background: "#181d25",
-  borderRadius: "12px",
-  cursor: "pointer"
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "16px",
-  marginTop: "20px",
-  borderRadius: "14px",
-  border: "none",
-  background: "white",
-  color: "black",
-  fontWeight: "bold" as const,
-  fontSize: "16px"
-};
