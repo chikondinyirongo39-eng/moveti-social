@@ -12,10 +12,8 @@ export default function ArtistProfile() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) return;
 
@@ -32,13 +30,11 @@ export default function ArtistProfile() {
       }
     }
 
-    load();
+    loadProfile();
   }, []);
 
   async function saveProfile() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       window.location.href = '/login';
@@ -52,7 +48,7 @@ export default function ArtistProfile() {
           user_id: user.id,
           name,
           bio,
-          avatar_url: avatarUrl,
+          avatar_url: avatarUrl
         },
         { onConflict: 'user_id' }
       );
