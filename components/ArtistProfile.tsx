@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase';
 
 export default function ArtistProfile() {
   const supabase = createClient();
+
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -12,7 +13,10 @@ export default function ArtistProfile() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
       const { data } = await supabase
@@ -32,7 +36,9 @@ export default function ArtistProfile() {
   }, []);
 
   async function saveProfile() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       window.location.href = '/login';
@@ -41,21 +47,29 @@ export default function ArtistProfile() {
 
     const { error } = await supabase
       .from('artist_profiles')
-      .upsert({
-        user_id: user.id,
-        name,
-        bio,
-        avatar_url: avatarUrl
-      }, { onConflict: 'user_id' });
+      .upsert(
+        {
+          user_id: user.id,
+          name,
+          bio,
+          avatar_url: avatarUrl,
+        },
+        { onConflict: 'user_id' }
+      );
 
-    setMessage(error ? error.message : 'Profile saved successfully.');
+    setMessage(
+      error ? error.message : 'Profile saved successfully'
+    );
   }
 
   return (
     <main className="min-h-screen bg-gray-50 p-5">
       <div className="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow-sm">
         <h1 className="text-3xl font-black">Artist Profile</h1>
-        <p className="mt-1 text-gray-500">Manage your MOVETI artist profile.</p>
+
+        <p className="mt-1 text-gray-500">
+          Manage your MOVETI artist profile.
+        </p>
 
         {avatarUrl ? (
           <img
@@ -100,7 +114,9 @@ export default function ArtistProfile() {
           </button>
 
           {message && (
-            <p className="text-center text-sm text-gray-600">{message}</p>
+            <p className="text-center text-sm text-gray-600">
+              {message}
+            </p>
           )}
         </div>
 
@@ -108,7 +124,7 @@ export default function ArtistProfile() {
           href="/"
           className="mt-5 block text-center font-medium"
         >
-          ← Back to MOVETI
+          Back to MOVETI
         </a>
       </div>
     </main>
