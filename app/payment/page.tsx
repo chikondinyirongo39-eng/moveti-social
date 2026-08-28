@@ -1,47 +1,345 @@
-import Link from "next/link";
+'use client';
 
-const methods = [
-  ["Airtel Money", "Receive earnings through Airtel Money."],
-  ["TNM Mpamba", "Receive earnings through Mpamba."],
-  ["Bank Account", "Receive earnings directly to your bank."],
-];
+import { useState } from 'react';
+import Link from 'next/link';
 
-export default function Payment() {
+type PayoutMethod = 'airtel' | 'mpamba' | 'bank';
+
+export default function PaymentPage() {
+  const [plan, setPlan] = useState('5 Months');
+  const [method, setMethod] = useState<PayoutMethod>('airtel');
+  const [details, setDetails] = useState('');
+  const [message, setMessage] = useState('');
+
+  const amount = plan === '5 Months' ? 'K40,000' : 'K100,000';
+
+  function savePayment() {
+    if (!details.trim()) {
+      setMessage('Please enter your payment details.');
+      return;
+    }
+
+    const payment = {
+      id: Date.now(),
+      plan,
+      amount,
+      method,
+      details: details.trim(),
+      status: 'Payment Pending',
+      createdAt: new Date().toISOString()
+    };
+
+    localStorage.setItem(
+      'moveti_payment',
+      JSON.stringify(payment)
+    );
+
+    setMessage(
+      'Payment request saved successfully. MOVETI will verify your payment.'
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-[#111]">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <Link href="/" className="text-2xl font-black">MOVETI</Link>
-          <Link href="/dashboard" className="text-sm font-bold">Dashboard</Link>
-        </div>
-      </header>
+    <main style={pageStyle}>
+      <div style={containerStyle}>
+        <Link href="/" style={brandStyle}>
+          MOVETI
+        </Link>
 
-      <section className="mx-auto max-w-4xl px-4 py-10">
-        <h1 className="text-3xl font-black">Payments</h1>
-        <p className="mt-2 text-gray-500">Manage your creator earnings and payout method.</p>
+        <section style={heroStyle}>
+          <h1 style={headingStyle}>Distribution Payment</h1>
+          <p style={mutedStyle}>
+            Choose your MOVETI distribution plan and payment method.
+          </p>
+        </section>
 
-        <div className="mt-7 rounded-3xl bg-black p-7 text-white">
-          <p className="text-sm text-gray-300">Available earnings</p>
-          <p className="mt-2 text-4xl font-black">K0.00</p>
-          <button className="mt-6 rounded-full bg-white px-6 py-3 font-bold text-black">
-            Withdraw
-          </button>
-        </div>
+        <section style={cardStyle}>
+          <h2 style={sectionTitle}>Choose your plan</h2>
 
-        <h2 className="mt-8 text-xl font-black">Payout method</h2>
-
-        <div className="mt-4 space-y-4">
-          {methods.map(([name, text]) => (
+          <div style={plansStyle}>
             <button
-              key={name}
-              className="w-full rounded-2xl bg-white p-5 text-left shadow-sm hover:shadow-md"
+              onClick={() => setPlan('5 Months')}
+              style={plan === '5 Months' ? activePlanStyle : planStyle}
             >
-              <strong>{name}</strong>
-              <p className="mt-1 text-sm text-gray-500">{text}</p>
+              <strong>5 Months</strong>
+              <span>K40,000</span>
+              <small>Unlimited releases for 5 months</small>
             </button>
-          ))}
-        </div>
-      </section>
+
+            <button
+              onClick={() => setPlan('1 Year')}
+              style={plan === '1 Year' ? activePlanStyle : planStyle}
+            >
+              <strong>1 Year</strong>
+              <span>K100,000</span>
+              <small>Unlimited releases for 12 months</small>
+            </button>
+          </div>
+
+          <div style={selectedBoxStyle}>
+            <span>Selected plan</span>
+            <strong>{plan} — {amount}</strong>
+          </div>
+
+          <h2 style={sectionTitle}>Payment method</h2>
+
+          <div style={methodsStyle}>
+            <button
+              onClick={() => setMethod('airtel')}
+              style={method === 'airtel' ? activeMethodStyle : methodStyle}
+            >
+              <strong>📱 Airtel Money</strong>
+              <span>Pay using Airtel Money</span>
+            </button>
+
+            <button
+              onClick={() => setMethod('mpamba')}
+              style={method === 'mpamba' ? activeMethodStyle : methodStyle}
+            >
+              <strong>📱 TNM Mpamba</strong>
+              <span>Pay using Mpamba</span>
+            </button>
+
+            <button
+              onClick={() => setMethod('bank')}
+              style={method === 'bank' ? activeMethodStyle : methodStyle}
+            >
+              <strong>🏦 Bank Account</strong>
+              <span>Pay by bank transfer</span>
+            </button>
+          </div>
+
+          <label style={labelStyle}>
+            {method === 'airtel'
+              ? 'Airtel Money number'
+              : method === 'mpamba'
+              ? 'TNM Mpamba number'
+              : 'Bank account / transfer reference'}
+          </label>
+
+          <input
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            placeholder={
+              method === 'bank'
+                ? 'Enter transfer reference'
+                : 'Enter your phone number'
+            }
+            style={inputStyle}
+          />
+
+          <div style={summaryStyle}>
+            <div>
+              <span>Distribution plan</span>
+              <strong>{plan}</strong>
+            </div>
+
+            <div>
+              <span>Amount</span>
+              <strong>{amount}</strong>
+            </div>
+
+            <div>
+              <span>Payment method</span>
+              <strong>
+                {method === 'airtel'
+                  ? 'Airtel Money'
+                  : method === 'mpamba'
+                  ? 'TNM Mpamba'
+                  : 'Bank Account'}
+              </strong>
+            </div>
+          </div>
+
+          {message && (
+            <div style={messageStyle}>
+              {message}
+            </div>
+          )}
+
+          <button onClick={savePayment} style={payButtonStyle}>
+            Submit Payment Request — {amount}
+          </button>
+
+          <Link href="/releases" style={backLinkStyle}>
+            ← Back to My Releases
+          </Link>
+        </section>
+      </div>
     </main>
   );
 }
+
+const pageStyle = {
+  minHeight: '100vh',
+  background: '#07090d',
+  color: 'white',
+  fontFamily: 'Arial, sans-serif',
+  padding: '24px',
+  boxSizing: 'border-box' as const
+};
+
+const containerStyle = {
+  maxWidth: '800px',
+  margin: '0 auto'
+};
+
+const brandStyle = {
+  display: 'inline-block',
+  color: 'white',
+  textDecoration: 'none',
+  fontWeight: '900' as const,
+  letterSpacing: '3px',
+  marginBottom: '30px'
+};
+
+const heroStyle = {
+  marginBottom: '24px'
+};
+
+const headingStyle = {
+  fontSize: '32px',
+  fontWeight: '900' as const,
+  margin: '0 0 8px'
+};
+
+const mutedStyle = {
+  color: '#929aa7',
+  lineHeight: 1.5
+};
+
+const cardStyle = {
+  background: '#11151c',
+  border: '1px solid #252a33',
+  borderRadius: '20px',
+  padding: '24px'
+};
+
+const sectionTitle = {
+  fontSize: '18px',
+  fontWeight: '800' as const,
+  margin: '8px 0 15px'
+};
+
+const plansStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+  gap: '12px'
+};
+
+const planStyle = {
+  display: 'flex',
+  flexDirection: 'column' as const,
+  alignItems: 'flex-start',
+  gap: '8px',
+  padding: '18px',
+  borderRadius: '14px',
+  border: '1px solid #303744',
+  background: '#181d25',
+  color: 'white',
+  cursor: 'pointer',
+  textAlign: 'left' as const
+};
+
+const activePlanStyle = {
+  ...planStyle,
+  border: '2px solid white',
+  background: '#202631'
+};
+
+const selectedBoxStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '15px',
+  flexWrap: 'wrap' as const,
+  margin: '20px 0 28px',
+  padding: '15px',
+  borderRadius: '12px',
+  background: '#191f28',
+  color: '#cbd1da'
+};
+
+const methodsStyle = {
+  display: 'grid',
+  gap: '10px'
+};
+
+const methodStyle = {
+  display: 'flex',
+  flexDirection: 'column' as const,
+  alignItems: 'flex-start',
+  gap: '5px',
+  padding: '15px',
+  borderRadius: '12px',
+  border: '1px solid #303744',
+  background: '#181d25',
+  color: 'white',
+  cursor: 'pointer',
+  textAlign: 'left' as const
+};
+
+const activeMethodStyle = {
+  ...methodStyle,
+  border: '2px solid white',
+  background: '#202631'
+};
+
+const labelStyle = {
+  display: 'block',
+  marginTop: '25px',
+  marginBottom: '8px',
+  fontWeight: '700' as const,
+  fontSize: '14px'
+};
+
+const inputStyle = {
+  width: '100%',
+  boxSizing: 'border-box' as const,
+  padding: '15px',
+  borderRadius: '12px',
+  border: '1px solid #333a46',
+  background: '#181d25',
+  color: 'white',
+  fontSize: '15px',
+  outline: 'none'
+};
+
+const summaryStyle = {
+  display: 'grid',
+  gap: '12px',
+  marginTop: '22px',
+  padding: '16px',
+  borderRadius: '14px',
+  background: '#191f28'
+};
+
+const messageStyle = {
+  marginTop: '18px',
+  padding: '14px',
+  borderRadius: '12px',
+  background: '#17251b',
+  border: '1px solid #315139',
+  color: '#a9e0b1'
+};
+
+const payButtonStyle = {
+  width: '100%',
+  padding: '16px',
+  marginTop: '18px',
+  border: 'none',
+  borderRadius: '14px',
+  background: 'white',
+  color: 'black',
+  fontWeight: '900' as const,
+  fontSize: '16px',
+  cursor: 'pointer'
+};
+
+const backLinkStyle = {
+  display: 'block',
+  marginTop: '16px',
+  textAlign: 'center' as const,
+  color: '#9da5b2',
+  textDecoration: 'none',
+  fontSize: '14px'
+};

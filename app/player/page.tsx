@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '../../lib/supabase';
 import MusicPlayer from '@/components/MusicPlayer';
 
 export default function PlayerPage() {
