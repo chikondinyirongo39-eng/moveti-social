@@ -206,6 +206,12 @@ export default function ManageCenter() {
                     </p>
                   </div>
 
+          <a
+            href={`/new-release?id=${release.id}`}
+            className='rounded-xl bg-gray-100 px-3 py-2 text-sm font-bold text-black'
+          >
+            Edit
+          </a>
                   <button
                     onClick={() => deleteRelease(release.id)}
                     className="rounded-xl bg-red-100 px-3 py-2 text-sm font-bold text-red-600"
