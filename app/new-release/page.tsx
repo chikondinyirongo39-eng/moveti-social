@@ -17,6 +17,18 @@ export default function NewRelease() {
   const [explicit, setExplicit] = useState(false);
   const [rights, setRights] = useState(false);
   const supabase = createClient();
+useEffect(() => {
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (!id) return;
+  supabase.from('releases').select('*').eq('id', id).single().then(({ data }) => {
+    if (!data) return;
+    setArtist(data.artist || 'Astravet CN');
+    setTitle(data.title || '');
+    setGenre(data.genre || '');
+    setDate(data.release_date || '');
+    setCopyright(data.copyright || '');
+  });
+}, []);
 const [message, setMessage] = useState('');
 
   function createRelease() {
