@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase';
 
 export default function NewRelease() {
   const [artist, setArtist] = useState('Astravet CN');
@@ -15,7 +16,8 @@ export default function NewRelease() {
   const [youtube, setYoutube] = useState(true);
   const [explicit, setExplicit] = useState(false);
   const [rights, setRights] = useState(false);
-  const [message, setMessage] = useState('');
+  const supabase = createClient();
+const [message, setMessage] = useState('');
 
   function createRelease() {
     if (!artist.trim() || !title.trim() || !genre.trim() || !date) {
