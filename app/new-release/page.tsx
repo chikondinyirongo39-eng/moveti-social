@@ -55,24 +55,56 @@ const [message, setMessage] = useState('');
       return;
     }
 
+    const editId = new URLSearchParams(window.location.search).get('id');
+
+    const existing = JSON.parse(
+      localStorage.getItem('moveti_releases') || '[]'
+    );
+
+    if (editId) {
+      const updated = existing.map((release: any) =>
+        String(release.id) === String(editId)
+          ? {
+              ...release,
+              artist: artist.trim(),
+              title: title.trim(),
+              genre: genre.trim(),
+              date,
+              release_date: date,
+              copyright: copyright.trim(),
+              platforms,
+              explicit,
+              rights
+            }
+          : release
+      );
+
+      localStorage.setItem(
+        'moveti_releases',
+        JSON.stringify(updated)
+      );
+
+      setMessage('Release updated successfully.');
+      window.location.href = '/releases';
+      return;
+    }
+
     const release = {
       id: Date.now(),
       artist: artist.trim(),
       title: title.trim(),
       genre: genre.trim(),
       date,
+      release_date: date,
       copyright: copyright.trim(),
       platforms,
       explicit,
+      rights,
       status: 'Payment Pending',
       fee: 'K5,000',
       royalty: '95% Artist / 5% MOVETI',
       createdAt: new Date().toISOString()
     };
-
-    const existing = JSON.parse(
-      localStorage.getItem('moveti_releases') || '[]'
-    );
 
     localStorage.setItem(
       'moveti_releases',
