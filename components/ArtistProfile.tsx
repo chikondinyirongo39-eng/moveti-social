@@ -3,129 +3,209 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 
-export default function ArtistProfile() {
+export default function ProfileSettings() {
   const supabase = createClient();
 
-  const [profileId, setProfileId] = useState('');
-  const [artistName, setArtistName] = useState('');
+  const [userId, setUserId] = useState('');
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    async function loadProfile() {
-      const { data, error } = await supabase
-        .from('artist_profiles')
-        .select('id, artist_name, bio, avatar_url')
-        .limit(1)
-        .maybeSingle();
+    async function load() {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
 
-      if (error) {
-        setMessage(error.message);
+      if (!user) {
+        window.location.href = '/login';
         return;
       }
 
+      setUserId(user.id);
+
+      const { data } = await supabase
+        .from('artist_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
       if (data) {
-        setProfileId(data.id);
-        setArtistName(data.artist_name || '');
+        setName(data.name || '');
+        setUsername(data.username || '');
         setBio(data.bio || '');
         setAvatarUrl(data.avatar_url || '');
       }
     }
 
-    loadProfile();
+    load();
   }, []);
 
   async function saveProfile() {
+    setSaving(true);
     setMessage('');
 
-    const values = {
-      artist_name: artistName,
-      bio,
-      avatar_url: avatarUrl
-    };
+    let finalAvatarUrl = avatarUrl;
 
-    const result = profileId
-      ? await supabase
-          .from('artist_profiles')
-          .update(values)
-          .eq('id', profileId)
-      : await supabase
-          .from('artist_profiles')
-          .insert(values);
+    if (avatarFile) {
+      const ext =
+        avatarFile.name.split('.').pop()?.toLowerCase() || 'jpg';
 
-    if (result.error) {
-      setMessage(result.error.message);
+      const path =
+        `${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+      const upload = await supabase.storage
+        .from('avatars')
+        .upload(path, avatarFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (upload.error) {
+        setMessage(upload.error.message);
+        setSaving(false);
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path);
+
+      finalAvatarUrl = data.publicUrl;
+      setAvatarUrl(finalAvatarUrl);
+    }
+
+    const { error } = await supabase
+      .from('artist_profiles')
+      .upsert({
+        id: userId,
+        name: name.trim() || null,
+        username: username.trim() || null,
+        bio: bio.trim() || null,
+        avatar_url: finalAvatarUrl || null
+      });
+
+    if (error) {
+      setMessage(error.message);
+      setSaving(false);
       return;
     }
 
-    setMessage('Profile saved successfully');
+    setAvatarFile(null);
+    setMessage('Profile saved successfully.');
+    setSaving(false);
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-5">
-      <div className="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-black">Artist Profile</h1>
+    <main className="min-h-screen bg-gray-50 p-5 pb-10">
+      <div className="mx-auto max-w-2xl">
 
-        <p className="mt-1 text-gray-500">
-          Manage your MOVETI artist profile.
-        </p>
-
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={artistName || 'Artist'}
-            className="mx-auto mt-6 h-28 w-28 rounded-full object-cover"
-          />
-        ) : (
-          <div className="mx-auto mt-6 flex h-28 w-28 items-center justify-center rounded-full bg-gray-200 text-4xl">
-            🎤
-          </div>
-        )}
-
-        <div className="mt-6 space-y-4">
-          <input
-            value={artistName}
-            onChange={(e) => setArtistName(e.target.value)}
-            placeholder="Artist name"
-            className="w-full rounded-xl border p-3 outline-none"
-          />
-
-          <input
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
-            placeholder="Profile picture URL"
-            className="w-full rounded-xl border p-3 outline-none"
-          />
-
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="Artist bio"
-            rows={5}
-            className="w-full rounded-xl border p-3 outline-none"
-          />
-
-          <button
-            onClick={saveProfile}
-            className="w-full rounded-xl bg-black p-3 font-bold text-white"
-          >
-            Save Profile
-          </button>
-
-          {message && (
-            <p className="text-center text-sm text-gray-500">
-              {message}
-            </p>
-          )}
+        <div className="rounded-3xl bg-black p-6 text-white">
+          <h1 className="text-3xl font-black">
+            👤 Profile Settings
+          </h1>
+          <p className="mt-1 text-gray-300">
+            Customize your MOVETI artist profile.
+          </p>
         </div>
 
-        <a
-          href="/"
-          className="mt-5 block text-center font-medium"
-        >
-          Back to MOVETI
-        </a>
+        <section className="mt-5 rounded-2xl bg-white p-5 shadow-sm">
+
+          <div className="space-y-4">
+
+            {avatarUrl ? (
+              <div className="flex justify-center">
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  className="h-28 w-28 rounded-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-100 text-4xl">
+                  👤
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="mb-2 block text-sm font-bold">
+                Profile photo
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setAvatarFile(e.target.files?.[0] || null)
+                }
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
+
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Artist name"
+              className="w-full rounded-xl border p-3"
+            />
+
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full rounded-xl border p-3"
+            />
+
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Tell people about yourself..."
+              rows={5}
+              className="w-full rounded-xl border p-3"
+            />
+
+            <button
+              onClick={saveProfile}
+              disabled={saving}
+              className="w-full rounded-xl bg-black p-4 font-bold text-white disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save Profile'}
+            </button>
+
+            {message && (
+              <div className="rounded-xl bg-gray-100 p-4 text-center text-sm">
+                {message}
+              </div>
+            )}
+
+          </div>
+
+        </section>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+
+          <a
+            href="/dashboard"
+            className="rounded-xl bg-white p-4 text-center font-bold shadow-sm"
+          >
+            📊 Dashboard
+          </a>
+
+          <a
+            href="/"
+            className="rounded-xl bg-black p-4 text-center font-bold text-white"
+          >
+            🏠 Home
+          </a>
+
+        </div>
+
       </div>
     </main>
   );
