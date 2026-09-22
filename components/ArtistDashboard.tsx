@@ -87,7 +87,9 @@ export default function ArtistDashboard() {
     <main className="min-h-screen bg-gray-50 p-5 pb-10">
       <div className="mx-auto max-w-3xl">
 
-        <section className="rounded-3xl bg-black p-7 text-white">
+        <a href="/wallet" className="mb-4 block rounded-xl bg-black p-5 font-black text-white shadow-md">💰 Wallet</a>
+
+<section className="rounded-3xl bg-black p-7 text-white">
 
           <p className="text-sm text-gray-300">
             Welcome back

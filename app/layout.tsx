@@ -1,23 +1,20 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import MovetiNavigation from '@/components/MovetiNavigation';
+import type { Metadata } from 'next'
+import './globals.css'
+import GlobalBackButton from '@/components/GlobalBackButton'
 
 export const metadata: Metadata = {
-  title: 'MOVETI',
-  description: 'MOVETI social music platform'
-};
+  title: 'MOVETI Social',
+  description: 'Music, creators, videos and community.',
+}
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="en">
-      <body className="pb-20">
-        {children}
-        <MovetiNavigation />
-      </body>
+      <body><GlobalBackButton />{children}</body>
     </html>
-  );
+  )
 }

@@ -1,117 +1,151 @@
-'use client';
+"use client"
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase';
+import { useState } from "react"
+import Link from "next/link"
 
-type Profile = {
-  id: string;
-  username: string;
-  display_name: string;
-  avatar_url?: string | null;
-};
+type Result = {
+  id: string | number
+  type: "creator" | "post"
+  title: string
+  description?: string
+  user_id?: string
+  media_url?: string
+  media_type?: string
+}
 
 export default function SearchPage() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<Result[]>([])
+  const [loading, setLoading] = useState(false)
 
   async function search() {
-    const value = query.trim();
+    const value = query.trim()
 
     if (!value) {
-      setResults([]);
-      return;
+      setResults([])
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
-    const supabase = createClient();
+    try {
+      const response = await fetch(
+        `/api/search?q=${encodeURIComponent(value)}`,
+        { cache: "no-store" }
+      )
 
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, username, display_name, avatar_url')
-      .or(`username.ilike.%${value}%,display_name.ilike.%${value}%`)
-      .limit(30);
+      if (!response.ok) {
+        setResults([])
+        return
+      }
 
-    setResults(data || []);
-    setLoading(false);
+      const data = await response.json()
+
+      setResults(
+        Array.isArray(data)
+          ? data
+          : Array.isArray(data.results)
+            ? data.results
+            : []
+      )
+    } catch {
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <main className="min-h-screen bg-[#07090d] px-5 py-8 text-white">
+    <main className="min-h-screen bg-black px-4 py-8 text-white">
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-sm text-gray-400">
-          ← Home
-        </Link>
+        <header className="mb-6">
+          <h1 className="text-3xl font-black">Search MOVETI</h1>
+          <p className="mt-1 text-sm text-white/45">
+            Find creators, posts, videos and music.
+          </p>
+        </header>
 
-        <h1 className="mt-6 text-3xl font-black">
-          Search MOVETI
-        </h1>
-
-        <div className="mt-6 flex gap-2">
+        <div className="flex gap-2">
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') search();
+            onChange={event => setQuery(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "Enter") search()
             }}
-            placeholder="Search artists and creators..."
-            className="min-w-0 flex-1 rounded-2xl border border-gray-700 bg-[#11151d] p-4 text-white outline-none"
+            placeholder="Search creators, posts or music..."
+            className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white outline-none placeholder:text-white/30"
           />
 
           <button
             onClick={search}
-            className="rounded-2xl bg-white px-5 font-bold text-black"
+            className="rounded-2xl bg-white px-6 font-bold text-black"
           >
             Search
           </button>
         </div>
 
+        {loading && (
+          <p className="mt-6 text-sm text-white/40">
+            Searching MOVETI...
+          </p>
+        )}
+
+        {!loading && query && results.length === 0 && (
+          <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/40">
+            No results found.
+          </div>
+        )}
+
         <div className="mt-6 space-y-3">
-          {loading ? (
-            <div className="rounded-2xl bg-[#11151d] p-6 text-gray-400">
-              Searching...
-            </div>
-          ) : query && results.length === 0 ? (
-            <div className="rounded-2xl bg-[#11151d] p-6 text-center text-gray-400">
-              No people found.
-            </div>
-          ) : (
-            results.map((profile) => (
-              <Link
-                key={profile.id}
-                href={`/profiles/${profile.id}`}
-                className="flex items-center gap-4 rounded-2xl bg-[#11151d] p-4"
-              >
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white font-black text-black">
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    (profile.display_name || profile.username || 'M')
-                      .charAt(0)
-                      .toUpperCase()
-                  )}
-                </div>
+          {results.map(result => (
+            <article
+              key={`${result.type}-${result.id}`}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+            >
+              <div className="text-xs uppercase tracking-wider text-white/30">
+                {result.type}
+              </div>
 
-                <div>
-                  <p className="font-bold">
-                    {profile.display_name || profile.username}
-                  </p>
+              {result.type === "creator" && result.user_id ? (
+                <Link
+                  href={`/creator-profile/${result.user_id}`}
+                  className="mt-1 block text-lg font-bold hover:underline"
+                >
+                  {result.title}
+                </Link>
+              ) : (
+                <h2 className="mt-1 text-lg font-bold">
+                  {result.title}
+                </h2>
+              )}
 
-                  <p className="text-sm text-gray-400">
-                    @{profile.username}
-                  </p>
-                </div>
-              </Link>
-            ))
-          )}
+              {result.description && (
+                <p className="mt-1 text-sm text-white/50">
+                  {result.description}
+                </p>
+              )}
+
+              {result.media_url && result.media_type === "image" && (
+                <img
+                  src={result.media_url}
+                  alt=""
+                  className="mt-4 max-h-80 w-full rounded-xl object-contain"
+                />
+              )}
+
+              {result.media_url && result.media_type === "video" && (
+                <video
+                  src={result.media_url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="mt-4 max-h-80 w-full rounded-xl bg-black"
+                />
+              )}
+            </article>
+          ))}
         </div>
       </div>
     </main>
-  );
+  )
 }

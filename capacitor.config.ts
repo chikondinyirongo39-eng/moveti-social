@@ -1,14 +1,14 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.moveti.app',
-  appName: 'MOVETI',
-  webDir: '.next',
+  appId: 'com.moveti.social',
+  appName: 'MOVETI Social',
+  webDir: 'mobile-web',
   server: {
-    url: 'https://fluffy-capybara-6v4gq7qprp7phxx7w-3000.app.github.dev',
+    url: 'https://bookish-zebra-5vxqjpj94rr5c765j-3000.app.github.dev',
     cleartext: false,
-    androidScheme: 'https',
-  },
-};
+    androidScheme: 'https'
+  }
+}
 
-export default config;
+export default config

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase';
 
 export default function NewRelease() {
   const [artist, setArtist] = useState('Astravet CN');
+const [subscriptionPlan, setSubscriptionPlan] = useState<'5_months' | '1_year'>('5_months');
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
   const [date, setDate] = useState('');
@@ -14,6 +15,19 @@ export default function NewRelease() {
   const [audiomack, setAudiomack] = useState(true);
   const [boomplay, setBoomplay] = useState(true);
   const [youtube, setYoutube] = useState(true);
+  const [amazon, setAmazon] = useState(true);
+  const [deezer, setDeezer] = useState(true);
+  const [tidal, setTidal] = useState(true);
+  const [soundcloud, setSoundcloud] = useState(true);
+  const [pandora, setPandora] = useState(true);
+  const [qobuz, setQobuz] = useState(true);
+  const [napster, setNapster] = useState(true);
+  const [anghami, setAnghami] = useState(true);
+  const [tiktok, setTiktok] = useState(true);
+  const [facebook, setFacebook] = useState(true);
+  const [instagram, setInstagram] = useState(true);
+  const [snapchat, setSnapchat] = useState(true);
+  const [iheartradio, setIheartradio] = useState(true);
   const [explicit, setExplicit] = useState(false);
   const [rights, setRights] = useState(false);
   const supabase = createClient();
@@ -49,6 +63,19 @@ const [message, setMessage] = useState('');
     if (audiomack) platforms.push('Audiomack');
     if (boomplay) platforms.push('Boomplay');
     if (youtube) platforms.push('YouTube / YouTube Music');
+    if (amazon) platforms.push('Amazon Music');
+    if (deezer) platforms.push('Deezer');
+    if (tidal) platforms.push('TIDAL');
+    if (soundcloud) platforms.push('SoundCloud');
+    if (pandora) platforms.push('Pandora');
+    if (qobuz) platforms.push('Qobuz');
+    if (napster) platforms.push('Napster');
+    if (anghami) platforms.push('Anghami');
+    if (tiktok) platforms.push('TikTok');
+    if (facebook) platforms.push('Facebook');
+    if (instagram) platforms.push('Instagram');
+    if (snapchat) platforms.push('Snapchat');
+    if (iheartradio) platforms.push('iHeartRadio');
 
     if (platforms.length === 0) {
       setMessage('Please select at least one distribution platform.');
@@ -101,8 +128,9 @@ const [message, setMessage] = useState('');
       explicit,
       rights,
       status: 'Payment Pending',
-      fee: 'K5,000',
-      royalty: '95% Artist / 5% MOVETI',
+      subscriptionPlan,
+subscriptionPrice: subscriptionPlan === '5_months' ? 'K40,000' : 'K100,000',
+      royalty: '100% Artist / 0% MOVETI',
       createdAt: new Date().toISOString()
     };
 
@@ -228,12 +256,95 @@ const [message, setMessage] = useState('');
         )}
 
         <div style={paymentBox}>
-          <strong>Distribution fee: K5,000</strong>
-          <span>Artist royalty: 95% • MOVETI: 5%</span>
+          <strong></strong>
+          <span>Artist royalties: 100% • MOVETI royalty commission: 0%</span>
         </div>
 
         <button onClick={createRelease} style={buttonStyle}>
-          Continue to Payment →
+          
+<div style={{
+  marginTop: '24px',
+  padding: '18px',
+  borderRadius: '16px',
+  background: '#171722',
+  border: '1px solid #29293f'
+}}>
+  <h2 style={{
+    fontSize: '20px',
+    fontWeight: 800,
+    marginBottom: '6px'
+  }}>
+    MOVETI Distribution Subscription
+  </h2>
+
+  <p style={{
+    color: '#aaa',
+    marginBottom: '14px'
+  }}>
+    Choose your subscription. Both plans include unlimited music releases
+    during the active subscription period.
+  </p>
+
+  <div style={{
+    display: 'grid',
+    gap: '12px'
+  }}>
+    <label style={{
+      display: 'block',
+      padding: '15px',
+      borderRadius: '14px',
+      border: subscriptionPlan === '5_months'
+        ? '2px solid #fff'
+        : '1px solid #29293f',
+      cursor: 'pointer'
+    }}>
+      <input
+        type="radio"
+        name="subscriptionPlan"
+        value="5_months"
+        checked={subscriptionPlan === '5_months'}
+        onChange={() => setSubscriptionPlan('5_months')}
+        style={{ marginRight: '10px' }}
+      />
+      <strong>5 Months — K40,000</strong>
+      <div style={{ color: '#aaa', marginTop: '5px' }}>
+        Unlimited releases for 5 months
+      </div>
+    </label>
+
+    <label style={{
+      display: 'block',
+      padding: '15px',
+      borderRadius: '14px',
+      border: subscriptionPlan === '1_year'
+        ? '2px solid #fff'
+        : '1px solid #29293f',
+      cursor: 'pointer'
+    }}>
+      <input
+        type="radio"
+        name="subscriptionPlan"
+        value="1_year"
+        checked={subscriptionPlan === '1_year'}
+        onChange={() => setSubscriptionPlan('1_year')}
+        style={{ marginRight: '10px' }}
+      />
+      <strong>1 Year — K100,000</strong>
+      <div style={{ color: '#aaa', marginTop: '5px' }}>
+        Unlimited releases for 12 months
+      </div>
+    </label>
+  </div>
+
+  <p style={{
+    marginTop: '16px',
+    fontWeight: 700
+  }}>
+    Artist royalties: 100% • MOVETI royalty commission: 0%
+  </p>
+</div>
+
+Continue to Payment →
         </button>
 
         <button

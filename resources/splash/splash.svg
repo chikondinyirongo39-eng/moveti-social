@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<rect width="1024" height="1024" rx="220" fill="#111111"/>
+<circle cx="512" cy="430" r="270" fill="#1ed760"/>
+<path d="M330 365 L420 545 L512 365 L604 545 L694 365" fill="none" stroke="white" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="512" y="785" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="112" font-weight="800" fill="white">MOVETI</text>
+<text x="512" y="865" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="48" font-weight="600" fill="#1ed760">SOCIALS</text>
+</svg>
