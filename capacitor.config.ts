@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'MOVETI Social',
   webDir: 'mobile-web',
   server: {
-    url: 'https://bookish-zebra-5vxqjpj94rr5c765j-3000.app.github.dev',
+    url: 'https://moveti-social.vercel.app',
     cleartext: false,
     androidScheme: 'https'
   }
