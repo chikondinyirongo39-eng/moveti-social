@@ -1,0 +1,140 @@
+'use client'
+
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase'
+const supabase = createClient()
+
+export default function CreatorPage() {
+  const [name, setName] = useState('Artist')
+  const [balance, setBalance] = useState<string>('—')
+  const [releases, setReleases] = useState(0)
+
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      setName(
+        user.user_metadata?.display_name ||
+        user.user_metadata?.full_name ||
+        user.email?.split('@')[0] ||
+        'Artist'
+      )
+
+      const wallet = await supabase
+        .from('wallets')
+        .select('balance,currency')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!wallet.error && wallet.data) {
+        setBalance(
+          `${new Intl.NumberFormat('en-MW').format(wallet.data.balance)} ${wallet.data.currency || 'MWK'}`
+        )
+      }
+
+      const release = await supabase
+        .from('releases')
+        .select('id', { count: 'exact', head: true })
+
+      if (!release.error) setReleases(release.count || 0)
+    }
+
+    load()
+  }, [])
+
+  const cards = [
+    ['♪', 'Releases', 'Manage your music', '/releases'],
+    ['+', 'New Release', 'Create a release', '/new-release'],
+    ['▣', 'Drafts', 'Saved release drafts', '/manage'],
+    ['↗', 'Analytics', 'Creator performance', '/dashboard'],
+    ['◇', 'Royalties', 'Wallet and earnings', '/wallet'],
+    ['⚙', 'Settings', 'Artist profile settings', '/settings'],
+  ]
+
+  return (
+    <main className="min-h-screen bg-[#070708] text-white pb-28">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#070708]/95 px-4 py-4 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.3em] text-white/35">MOVETI</p>
+            <h1 className="text-xl font-black">Artist Studio</h1>
+          </div>
+          <Link href="/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 font-black">
+            {name[0]?.toUpperCase()}
+          </Link>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-5xl px-4 pt-6">
+        <section className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5">
+          <p className="text-sm text-white/40">Welcome back</p>
+          <h2 className="mt-1 text-2xl font-black">{name}</h2>
+          <p className="mt-2 text-sm leading-6 text-white/50">
+            Your central place for music, releases, royalties and creator tools.
+          </p>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <Link href="/wallet" className="rounded-2xl bg-black/30 p-4">
+              <p className="text-xs text-white/40">Wallet balance</p>
+              <p className="mt-2 text-lg font-black">{balance}</p>
+              <p className="mt-2 text-xs text-white/45">Open wallet →</p>
+            </Link>
+
+            <Link href="/releases" className="rounded-2xl bg-black/30 p-4">
+              <p className="text-xs text-white/40">Releases</p>
+              <p className="mt-2 text-lg font-black">{releases}</p>
+              <p className="mt-2 text-xs text-white/45">Manage releases →</p>
+            </Link>
+          </div>
+        </section>
+
+        <div className="mb-3 mt-7 flex items-center justify-between">
+          <h2 className="text-lg font-black">Studio</h2>
+          <span className="text-xs text-white/35">Creator tools</span>
+        </div>
+
+        <section className="grid grid-cols-2 gap-3">
+          {cards.map(([icon, title, description, href]) => (
+            <Link
+              key={title}
+              href={href}
+              className="rounded-3xl border border-white/10 bg-white/[0.045] p-4 active:scale-[0.98]"
+            >
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-xl">
+                {icon}
+              </div>
+              <h3 className="font-black">{title}</h3>
+              <p className="mt-1 text-xs leading-5 text-white/40">{description}</p>
+            </Link>
+          ))}
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-black">Distribution</h2>
+              <p className="mt-1 text-xs leading-5 text-white/40">
+                Distribution is paused while we finish the core MOVETI platform.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-[10px] font-bold text-white/35">
+              LATER
+            </span>
+          </div>
+        </section>
+      </div>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#070708]/95 backdrop-blur-xl">
+        <div className="mx-auto grid max-w-2xl grid-cols-5 px-2 py-2">
+          <Link href="/" className="py-2 text-center text-[10px] font-bold text-white/45">⌂<br />Home</Link>
+          <Link href="/discover" className="py-2 text-center text-[10px] font-bold text-white/45">⌕<br />Discover</Link>
+          <Link href="/create" className="py-2 text-center text-[10px] font-bold text-white/45">＋<br />Create</Link>
+          <Link href="/messages" className="py-2 text-center text-[10px] font-bold text-white/45">◌<br />Messages</Link>
+          <Link href="/profile" className="py-2 text-center text-[10px] font-bold text-white">●<br />Profile</Link>
+        </div>
+      </nav>
+    </main>
+  )
+}

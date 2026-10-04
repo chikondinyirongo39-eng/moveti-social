@@ -1,0 +1,496 @@
+'use client'
+
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+
+type Post = {
+  id: string
+  content: string
+  likes?: number
+  comments?: number
+  created_at: string
+}
+
+type Video = {
+  id: string
+  title?: string
+  description?: string
+  thumbnail_url?: string
+  video_url?: string
+  created_at?: string
+}
+
+type Tab = 'For You' | 'People' | 'Videos' | 'Reels'
+
+export default function DiscoverPage() {
+  const [activeTab, setActiveTab] = useState<Tab>('For You')
+  const [search, setSearch] = useState('')
+  const [posts, setPosts] = useState<Post[]>([])
+  const [videos, setVideos] = useState<Video[]>([])
+  const [loadingPosts, setLoadingPosts] = useState(true)
+  const [loadingVideos, setLoadingVideos] = useState(true)
+
+  useEffect(() => {
+    async function loadPosts() {
+      try {
+        const response = await fetch('/api/posts', { cache: 'no-store' })
+
+        if (response.ok) {
+          const data = await response.json()
+          setPosts(Array.isArray(data) ? data : [])
+        }
+      } finally {
+        setLoadingPosts(false)
+      }
+    }
+
+    async function loadVideos() {
+      try {
+        const response = await fetch('/api/search?q=video', {
+          cache: 'no-store',
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+
+          if (Array.isArray(data)) {
+            setVideos(data)
+          } else if (Array.isArray(data?.videos)) {
+            setVideos(data.videos)
+          }
+        }
+      } catch {
+        // Existing video/search APIs may not return video records.
+      } finally {
+        setLoadingVideos(false)
+      }
+    }
+
+    loadPosts()
+    loadVideos()
+  }, [])
+
+  const filteredPosts = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    if (!query) return posts
+
+    return posts.filter((post) =>
+      post.content?.toLowerCase().includes(query)
+    )
+  }, [posts, search])
+
+  const filteredVideos = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    if (!query) return videos
+
+    return videos.filter((video) =>
+      `${video.title || ''} ${video.description || ''}`
+        .toLowerCase()
+        .includes(query)
+    )
+  }, [videos, search])
+
+  const categories = [
+    { label: 'Music', icon: '♫', href: '/releases' },
+    { label: 'Creators', icon: '✦', href: '/creator' },
+    { label: 'Videos', icon: '▶', href: '/videos' },
+    { label: 'Live', icon: '●', href: '/live' },
+    { label: 'Shorts', icon: '▣', href: '/shorts' },
+  ]
+
+  return (
+    <main className="min-h-screen bg-[#09090b] pb-28 text-white">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#09090b]/95 backdrop-blur-xl">
+        <div className="mx-auto max-w-[720px] px-4">
+          <div className="flex h-[68px] items-center justify-between">
+            <div>
+              <div className="text-[25px] font-black tracking-[-1.5px]">
+                MOVETI
+              </div>
+              <div className="text-[10px] font-medium tracking-[3px] text-white/40">
+                DISCOVER
+              </div>
+            </div>
+
+            <Link
+              href="/notifications"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-lg"
+            >
+              ♡
+            </Link>
+          </div>
+
+          <div className="mb-4 flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4">
+            <span className="text-lg text-white/40">⌕</span>
+
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search MOVETI"
+              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/35"
+            />
+
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="text-xs text-white/40"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-3">
+            {(['For You', 'People', 'Videos', 'Reels'] as Tab[]).map(
+              (tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`whitespace-nowrap rounded-full px-5 py-2 text-xs font-bold ${
+                    activeTab === tab
+                      ? 'bg-white text-black'
+                      : 'border border-white/10 bg-white/[0.04] text-white/55'
+                  }`}
+                >
+                  {tab}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-[720px] px-4 pt-5">
+        {!search && (
+          <>
+            <div className="mb-7">
+              <div className="mb-3 flex items-end justify-between">
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight">
+                    Explore
+                  </h1>
+                  <p className="mt-1 text-xs text-white/35">
+                    Find music, people, videos and new creators.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-5 gap-2">
+                {categories.map((category) => (
+                  <Link
+                    key={category.label}
+                    href={category.href}
+                    className="group rounded-2xl border border-white/10 bg-[#111113] p-3 text-center transition hover:border-white/20"
+                  >
+                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] text-lg">
+                      {category.icon}
+                    </div>
+                    <div className="truncate text-[10px] font-bold text-white/65">
+                      {category.label}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-7">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-black">Trending now</h2>
+                  <p className="text-[11px] text-white/30">
+                    What the community is talking about
+                  </p>
+                </div>
+
+                <span className="text-xs font-bold text-white/30">
+                  Explore
+                </span>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="relative min-h-[150px] overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br from-fuchsia-500/20 via-purple-500/10 to-cyan-400/10 p-5">
+                  <div className="absolute right-4 top-4 text-3xl opacity-30">
+                    ♫
+                  </div>
+                  <div className="relative mt-12">
+                    <div className="mb-2 text-[10px] font-black uppercase tracking-[2px] text-white/40">
+                      Music
+                    </div>
+                    <div className="text-lg font-black">
+                      New music is moving
+                    </div>
+                    <div className="mt-1 text-xs text-white/40">
+                      Discover releases from the community.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative min-h-[150px] overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br from-cyan-400/15 via-white/[0.04] to-blue-500/10 p-5">
+                  <div className="absolute right-4 top-4 text-3xl opacity-30">
+                    ✦
+                  </div>
+                  <div className="relative mt-12">
+                    <div className="mb-2 text-[10px] font-black uppercase tracking-[2px] text-white/40">
+                      Creators
+                    </div>
+                    <div className="text-lg font-black">
+                      Meet new creators
+                    </div>
+                    <div className="mt-1 text-xs text-white/40">
+                      Find people worth following.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'People' ? (
+          <section>
+            <div className="mb-4">
+              <h2 className="text-lg font-black">People & creators</h2>
+              <p className="mt-1 text-xs text-white/35">
+                Discover artists and creators on MOVETI.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {['MOVETI Creator', 'Music Creator', 'Video Creator'].map(
+                (name, index) => (
+                  <Link
+                    key={name}
+                    href="/creator"
+                    className="flex items-center gap-4 rounded-[22px] border border-white/10 bg-[#111113] p-4"
+                  >
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black">
+                      {index === 0 ? 'M' : index === 1 ? '♫' : '▶'}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="font-black">{name}</div>
+                      <div className="mt-1 text-xs text-white/35">
+                        Creator on MOVETI
+                      </div>
+                    </div>
+
+                    <span className="rounded-full border border-white/10 px-4 py-2 text-[11px] font-bold text-white/60">
+                      View
+                    </span>
+                  </Link>
+                )
+              )}
+            </div>
+          </section>
+        ) : activeTab === 'Videos' || activeTab === 'Reels' ? (
+          <section>
+            <div className="mb-4">
+              <h2 className="text-lg font-black">
+                {activeTab === 'Reels' ? 'Short videos' : 'Videos'}
+              </h2>
+              <p className="mt-1 text-xs text-white/35">
+                Discover video content from MOVETI creators.
+              </p>
+            </div>
+
+            {loadingVideos ? (
+              <div className="grid grid-cols-2 gap-3">
+                {[1, 2, 3, 4].map((item) => (
+                  <div
+                    key={item}
+                    className="aspect-[4/5] animate-pulse rounded-[22px] bg-white/[0.05]"
+                  />
+                ))}
+              </div>
+            ) : filteredVideos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {filteredVideos.map((video) => (
+                  <Link
+                    href="/videos"
+                    key={video.id}
+                    className="group overflow-hidden rounded-[22px] border border-white/10 bg-[#111113]"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden bg-white/[0.04]">
+                      {video.thumbnail_url ? (
+                        <img
+                          src={video.thumbnail_url}
+                          alt={video.title || 'MOVETI video'}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-4xl text-white/20">
+                          ▶
+                        </div>
+                      )}
+
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-10">
+                        <div className="truncate text-xs font-black">
+                          {video.title || 'MOVETI video'}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[26px] border border-white/10 bg-[#111113] px-6 py-12 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] text-2xl">
+                  ▶
+                </div>
+                <h3 className="font-black">Videos are coming together</h3>
+                <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-white/35">
+                  Explore the video section as creators publish more content.
+                </p>
+                <Link
+                  href="/videos"
+                  className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-xs font-black text-black"
+                >
+                  Open videos
+                </Link>
+              </div>
+            )}
+          </section>
+        ) : (
+          <section>
+            <div className="mb-4 flex items-end justify-between">
+              <div>
+                <h2 className="text-lg font-black">
+                  {search ? 'Search results' : 'Discover posts'}
+                </h2>
+                <p className="mt-1 text-xs text-white/35">
+                  {search
+                    ? `Results matching “${search}”`
+                    : 'Fresh conversations from the MOVETI community.'}
+                </p>
+              </div>
+            </div>
+
+            {loadingPosts ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className="h-36 animate-pulse rounded-[24px] bg-white/[0.05]"
+                  />
+                ))}
+              </div>
+            ) : filteredPosts.length > 0 ? (
+              <div className="space-y-3">
+                {filteredPosts.map((post) => (
+                  <article
+                    key={post.id}
+                    className="rounded-[24px] border border-white/10 bg-[#111113] p-4"
+                  >
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-sm font-black text-black">
+                        M
+                      </div>
+
+                      <div>
+                        <div className="text-sm font-black">
+                          MOVETI Creator
+                        </div>
+                        <div className="text-[10px] text-white/30">
+                          Community post
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-white/75">
+                      {post.content}
+                    </p>
+
+                    <div className="mt-4 flex gap-5 text-[11px] text-white/30">
+                      <span>{Number(post.likes || 0)} likes</span>
+                      <span>{Number(post.comments || 0)} comments</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[26px] border border-white/10 bg-[#111113] px-6 py-12 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] text-2xl">
+                  ⌕
+                </div>
+                <h3 className="font-black">
+                  {search ? 'Nothing found yet' : 'Nothing to discover yet'}
+                </h3>
+                <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-white/35">
+                  {search
+                    ? 'Try another search term.'
+                    : 'As more people post and create, their content will appear here.'}
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        <div className="mt-8 rounded-[24px] border border-white/10 bg-[#111113] p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[2px] text-white/30">
+                MOVETI
+              </div>
+              <div className="mt-1 text-sm font-black">
+                Keep exploring
+              </div>
+            </div>
+
+            <Link
+              href="/"
+              className="rounded-full border border-white/10 px-4 py-2 text-xs font-bold text-white/60"
+            >
+              Home
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#09090b]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[78px] max-w-[680px] items-center justify-around px-2">
+          <Link
+            href="/"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">⌂</span>
+            Home
+          </Link>
+
+          <Link
+            href="/discover"
+            className="flex flex-col items-center gap-1 text-[10px] font-black text-white"
+          >
+            <span className="text-xl">◉</span>
+            Discover
+          </Link>
+
+          <Link
+            href="/creator"
+            className="flex h-12 w-14 items-center justify-center rounded-2xl bg-white text-2xl font-light text-black"
+            aria-label="Create"
+          >
+            +
+          </Link>
+
+          <Link
+            href="/messages"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">◌</span>
+            Messages
+          </Link>
+
+          <Link
+            href="/profile"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">●</span>
+            Profile
+          </Link>
+        </div>
+      </nav>
+    </main>
+  )
+}

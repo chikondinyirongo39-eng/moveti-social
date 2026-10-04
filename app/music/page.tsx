@@ -1,0 +1,493 @@
+'use client'
+
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+
+type Release = {
+  id: string
+  title?: string
+  artist?: string
+  artist_name?: string
+  cover_url?: string
+  artwork_url?: string
+  cover?: string
+  created_at?: string
+}
+
+const genres = [
+  { name: 'Afrobeats', icon: '♫' },
+  { name: 'Hip-Hop', icon: '♬' },
+  { name: 'Gospel', icon: '✦' },
+  { name: 'R&B', icon: '♪' },
+  { name: 'Dance', icon: '◉' },
+]
+
+export default function MusicPage() {
+  const [releases, setReleases] = useState<Release[]>([])
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [playing, setPlaying] = useState<Release | null>(null)
+
+  useEffect(() => {
+    async function loadReleases() {
+      try {
+        const response = await fetch('/releases', {
+          cache: 'no-store',
+        })
+
+        if (!response.ok) return
+
+        const html = await response.text()
+
+        const titleMatches = [
+          ...html.matchAll(/>([^<>]{2,80})</g),
+        ]
+          .map((match) => match[1]?.trim())
+          .filter(
+            (value) =>
+              value &&
+              !value.includes('MOVETI') &&
+              !value.includes('Release') &&
+              !value.includes('Dashboard') &&
+              !value.includes('Manage')
+          )
+
+        const uniqueTitles = Array.from(new Set(titleMatches)).slice(0, 12)
+
+        setReleases(
+          uniqueTitles.map((title, index) => ({
+            id: `release-${index}`,
+            title,
+            artist: 'MOVETI Artist',
+          }))
+        )
+      } catch {
+        // The visual music experience remains available even when
+        // the existing releases page cannot be read.
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadReleases()
+  }, [])
+
+  const filteredReleases = useMemo(() => {
+    const query = search.trim().toLowerCase()
+
+    if (!query) return releases
+
+    return releases.filter((release) =>
+      `${release.title || ''} ${release.artist || release.artist_name || ''}`
+        .toLowerCase()
+        .includes(query)
+    )
+  }, [releases, search])
+
+  const featured = filteredReleases.slice(0, 5)
+  const newReleases = filteredReleases.slice(0, 8)
+
+  return (
+    <main className="min-h-screen bg-[#09090b] pb-32 text-white">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#09090b]/95 backdrop-blur-xl">
+        <div className="mx-auto max-w-[720px] px-4">
+          <div className="flex h-[68px] items-center justify-between">
+            <div>
+              <div className="text-[25px] font-black tracking-[-1.5px]">
+                MOVETI
+              </div>
+              <div className="text-[10px] font-medium tracking-[3px] text-white/40">
+                MUSIC
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href="/search"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-lg"
+              >
+                ⌕
+              </Link>
+
+              <Link
+                href="/profile"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-black text-black"
+              >
+                C
+              </Link>
+            </div>
+          </div>
+
+          <div className="mb-4 flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4">
+            <span className="text-lg text-white/35">⌕</span>
+
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search songs, artists or releases"
+              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
+            />
+
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="text-xs text-white/40"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-[720px] px-4 pt-5">
+        <div className="mb-7 overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-fuchsia-500/20 via-purple-500/10 to-cyan-400/10 p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="mb-3 text-[10px] font-black uppercase tracking-[3px] text-white/40">
+                MOVETI MUSIC
+              </div>
+
+              <h1 className="max-w-[330px] text-3xl font-black leading-tight tracking-[-1px]">
+                Your sound.
+                <br />
+                Your community.
+              </h1>
+
+              <p className="mt-3 max-w-[360px] text-sm leading-6 text-white/45">
+                Discover music from artists and creators on MOVETI.
+              </p>
+
+              <Link
+                href="/releases"
+                className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-xs font-black text-black"
+              >
+                Browse releases
+              </Link>
+            </div>
+
+            <div className="hidden h-24 w-24 items-center justify-center rounded-[24px] border border-white/10 bg-black/20 text-5xl sm:flex">
+              ♫
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-7">
+          <div className="mb-3 flex items-end justify-between">
+            <div>
+              <h2 className="text-lg font-black">Browse by mood</h2>
+              <p className="mt-1 text-[11px] text-white/30">
+                Find your sound
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {genres.map((genre) => (
+              <button
+                key={genre.name}
+                onClick={() => setSearch(genre.name)}
+                className="flex min-w-[112px] items-center gap-2 rounded-2xl border border-white/10 bg-[#111113] px-4 py-3 text-left"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.06]">
+                  {genre.icon}
+                </span>
+
+                <span className="text-[11px] font-bold text-white/65">
+                  {genre.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <h2 className="text-xl font-black">New releases</h2>
+              <p className="mt-1 text-xs text-white/30">
+                Fresh music from the MOVETI community
+              </p>
+            </div>
+
+            <Link
+              href="/releases"
+              className="text-xs font-bold text-white/45"
+            >
+              See all
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[1, 2, 3, 4].map((item) => (
+                <div
+                  key={item}
+                  className="aspect-square animate-pulse rounded-[22px] bg-white/[0.05]"
+                />
+              ))}
+            </div>
+          ) : newReleases.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {newReleases.map((release) => {
+                const artwork =
+                  release.cover_url ||
+                  release.artwork_url ||
+                  release.cover
+
+                return (
+                  <button
+                    key={release.id}
+                    onClick={() => setPlaying(release)}
+                    className="group text-left"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-[22px] border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02]">
+                      {artwork ? (
+                        <img
+                          src={artwork}
+                          alt={release.title || 'MOVETI release'}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center bg-gradient-to-br from-fuchsia-500/20 via-purple-500/10 to-cyan-400/10 text-4xl">
+                          ♫
+                        </div>
+                      )}
+
+                      <div className="absolute inset-x-0 bottom-0 flex justify-end bg-gradient-to-t from-black/80 to-transparent p-3 pt-8">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-black text-black">
+                          ▶
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 truncate text-sm font-black">
+                      {release.title || 'Untitled release'}
+                    </div>
+
+                    <div className="mt-1 truncate text-[11px] text-white/35">
+                      {release.artist ||
+                        release.artist_name ||
+                        'MOVETI Artist'}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="rounded-[26px] border border-white/10 bg-[#111113] px-6 py-12 text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] text-2xl">
+                ♫
+              </div>
+
+              <h3 className="font-black">Music is waiting for you</h3>
+
+              <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-white/35">
+                Your music catalog will appear here as releases become
+                available.
+              </p>
+
+              <Link
+                href="/releases"
+                className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-xs font-black text-black"
+              >
+                Open releases
+              </Link>
+            </div>
+          )}
+        </div>
+
+        <div className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-xl font-black">Trending music</h2>
+            <p className="mt-1 text-xs text-white/30">
+              Music your community can discover
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-[26px] border border-white/10 bg-[#111113]">
+            {featured.length > 0 ? (
+              featured.map((release, index) => (
+                <button
+                  key={`trending-${release.id}`}
+                  onClick={() => setPlaying(release)}
+                  className="flex w-full items-center gap-3 border-b border-white/10 px-4 py-3 text-left last:border-b-0"
+                >
+                  <div className="w-5 text-center text-xs font-black text-white/20">
+                    {index + 1}
+                  </div>
+
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500/20 to-cyan-400/10 text-xl">
+                    ♫
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-black">
+                      {release.title || 'Untitled release'}
+                    </div>
+                    <div className="mt-1 truncate text-[11px] text-white/35">
+                      {release.artist ||
+                        release.artist_name ||
+                        'MOVETI Artist'}
+                    </div>
+                  </div>
+
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-xs text-white/60">
+                    ▶
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="p-6 text-center text-xs text-white/35">
+                Trending music will appear here.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-8 grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/releases"
+            className="rounded-[26px] border border-white/10 bg-[#111113] p-5"
+          >
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.06] text-xl">
+              ◈
+            </div>
+
+            <div className="text-base font-black">Albums & releases</div>
+
+            <div className="mt-1 text-xs leading-5 text-white/35">
+              Explore complete releases from MOVETI artists.
+            </div>
+
+            <div className="mt-5 text-[10px] font-black uppercase tracking-[1.5px] text-white/30">
+              Explore →
+            </div>
+          </Link>
+
+          <Link
+            href="/creator"
+            className="rounded-[26px] border border-white/10 bg-[#111113] p-5"
+          >
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.06] text-xl">
+              ✦
+            </div>
+
+            <div className="text-base font-black">Artist music</div>
+
+            <div className="mt-1 text-xs leading-5 text-white/35">
+              Manage your music and creator content.
+            </div>
+
+            <div className="mt-5 text-[10px] font-black uppercase tracking-[1.5px] text-white/30">
+              Creator Studio →
+            </div>
+          </Link>
+        </div>
+
+        <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-xl">
+              ♫
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-black">
+                Keep discovering
+              </div>
+              <div className="mt-1 text-xs leading-5 text-white/35">
+                Find your next favorite song on MOVETI.
+              </div>
+            </div>
+
+            <Link
+              href="/discover"
+              className="rounded-full border border-white/10 px-4 py-2 text-[11px] font-bold text-white/55"
+            >
+              Discover
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {playing && (
+        <div className="fixed bottom-[78px] left-0 right-0 z-40 px-3">
+          <div className="mx-auto flex max-w-[680px] items-center gap-3 rounded-[22px] border border-white/10 bg-[#151517]/95 p-3 shadow-2xl backdrop-blur-xl">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500/20 to-cyan-400/10 text-xl">
+              ♫
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-black">
+                {playing.title || 'Untitled release'}
+              </div>
+              <div className="truncate text-[10px] text-white/35">
+                {playing.artist ||
+                  playing.artist_name ||
+                  'MOVETI Artist'}
+              </div>
+            </div>
+
+            <Link
+              href="/player"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xs font-black text-black"
+            >
+              ▶
+            </Link>
+
+            <button
+              onClick={() => setPlaying(null)}
+              className="flex h-9 w-9 items-center justify-center text-white/35"
+              aria-label="Close player"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      <nav className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] z-50 border-t border-white/10 bg-[#09090b]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[78px] max-w-[680px] items-center justify-around px-2">
+          <Link
+            href="/"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">⌂</span>
+            Home
+          </Link>
+
+          <Link
+            href="/discover"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">◉</span>
+            Discover
+          </Link>
+
+          <Link
+            href="/create"
+            className="flex h-12 w-14 items-center justify-center rounded-2xl bg-white text-2xl font-light text-black"
+          >
+            +
+          </Link>
+
+          <Link
+            href="/music"
+            className="flex flex-col items-center gap-1 text-[10px] font-black text-white"
+          >
+            <span className="text-xl">♫</span>
+            Music
+          </Link>
+
+          <Link
+            href="/profile"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">●</span>
+            Profile
+          </Link>
+        </div>
+      </nav>
+    </main>
+  )
+}

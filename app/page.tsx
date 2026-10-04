@@ -26,6 +26,35 @@ type Post = {
   } | null;
 };
 
+
+async function movetiInteraction(
+  postId: string | number,
+  action: "like" | "unlike" | "comment",
+  content?: string
+) {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("moveti_access_token")
+      : null;
+
+  const response = await fetch("/api/post-interactions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ postId, action, content }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data?.error || "Unable to complete interaction");
+  }
+
+  return data;
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -362,6 +391,62 @@ export default function HomePage() {
           </Link>
         </div>
       </nav>
-    </main>
+    
+      <script
+        id="moveti-real-interactions"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (() => {
+              if (window.__movetiInteractionsInstalled) return;
+              window.__movetiInteractionsInstalled = true;
+
+              document.addEventListener("click", async (event) => {
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+
+                const button = target.closest("[data-moveti-like]");
+                if (!button) return;
+
+                const postId = button.getAttribute("data-moveti-like");
+                if (!postId) return;
+
+                button.setAttribute("aria-busy", "true");
+
+                try {
+                  const liked = button.getAttribute("data-liked") === "true";
+                  const token = localStorage.getItem("moveti_access_token");
+
+                  const res = await fetch("/api/post-interactions", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      ...(token ? { Authorization: "Bearer " + token } : {})
+                    },
+                    body: JSON.stringify({
+                      postId,
+                      action: liked ? "unlike" : "like"
+                    })
+                  });
+
+                  const data = await res.json().catch(() => ({}));
+
+                  if (!res.ok) {
+                    alert(data.error || "Please log in to like this post.");
+                    return;
+                  }
+
+                  button.setAttribute("data-liked", data.liked ? "true" : "false");
+                  button.textContent = data.liked ? "♥ Liked" : "♡ Like";
+                } catch {
+                  alert("Unable to update like right now.");
+                } finally {
+                  button.removeAttribute("aria-busy");
+                }
+              });
+            })();
+          `
+        }}
+      />
+</main>
   );
 }
