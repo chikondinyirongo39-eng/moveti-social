@@ -1,121 +1,119 @@
+import { NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+async function getSupabase() {
+  const cookieStore = await cookies()
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-function getSupabase() {
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Supabase configuration is missing.");
-  }
-
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch {
+            // Cookies may be read-only in some server contexts.
+          }
+        },
+      },
+    }
+  )
 }
 
-async function getAuthenticatedUser(
-  request: NextRequest,
-  supabase: ReturnType<typeof getSupabase>
-) {
-  const authorization = request.headers.get("authorization");
-
-  if (!authorization?.startsWith("Bearer ")) {
-    return null;
-  }
-
-  const token = authorization.slice(7).trim();
-
-  if (!token) return null;
-
-  const { data, error } = await supabase.auth.getUser(token);
-
-  if (error || !data.user) return null;
-
-  return data.user;
+function response(data: unknown, status = 200) {
+  return NextResponse.json(data, { status })
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const supabase = getSupabase();
-    const url = new URL(request.url);
-    const postId = url.searchParams.get("postId");
+    const supabase = await getSupabase()
+    const { searchParams } = new URL(request.url)
 
-    if (!postId) {
-      return NextResponse.json(
-        { error: "postId is required" },
-        { status: 400 }
-      );
+    const postId = Number(searchParams.get("postId"))
+
+    if (!postId || !Number.isInteger(postId)) {
+      return response({ error: "Invalid postId." }, 400)
     }
 
-    const [{ data: likes, error: likesError }, { data: comments, error: commentsError }] =
-      await Promise.all([
-        supabase
-          .from("post_likes")
-          .select("user_id")
-          .eq("post_id", postId),
+    const [
+      { count: likeCount, error: likeError },
+      { data: comments, error: commentError },
+      { data: userResult },
+    ] = await Promise.all([
+      supabase
+        .from("post_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", postId),
 
-        supabase
-          .from("post_comments")
-          .select("id, post_id, user_id, content, created_at")
-          .eq("post_id", postId)
-          .order("created_at", { ascending: true }),
-      ]);
+      supabase
+        .from("post_comments")
+        .select("id, post_id, user_id, content, created_at")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true }),
 
-    if (likesError) {
-      return NextResponse.json(
-        { error: likesError.message },
-        { status: 500 }
-      );
+      supabase.auth.getUser(),
+    ])
+
+    if (likeError) {
+      return response({ error: likeError.message }, 500)
     }
 
-    if (commentsError) {
-      return NextResponse.json(
-        { error: commentsError.message },
-        { status: 500 }
-      );
+    if (commentError) {
+      return response({ error: commentError.message }, 500)
     }
 
-    return NextResponse.json({
-      likes: likes || [],
-      comments: comments || [],
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Unable to load interactions." },
-      { status: 500 }
-    );
+    let liked = false
+
+    if (userResult.user) {
+      const { data: userLike } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .eq("post_id", postId)
+        .eq("user_id", userResult.user.id)
+        .maybeSingle()
+
+      liked = !!userLike
+    }
+
+    return response({
+      likes: likeCount ?? 0,
+      liked,
+      comments: comments ?? [],
+      commentCount: comments?.length ?? 0,
+    })
+  } catch (error) {
+    console.error("POST INTERACTIONS GET ERROR:", error)
+    return response({ error: "Unable to load post interactions." }, 500)
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const supabase = getSupabase();
-    const body = await request.json();
+    const supabase = await getSupabase()
 
-    const action = String(body?.action || "");
-    const postId = String(body?.postId || "");
+    const { data: auth, error: authError } = await supabase.auth.getUser()
 
-    if (!postId || !action) {
-      return NextResponse.json(
-        { error: "postId and action are required." },
-        { status: 400 }
-      );
+    if (authError || !auth.user) {
+      return response(
+        { error: "Please log in to interact with this post." },
+        401
+      )
     }
 
-    const user = await getAuthenticatedUser(request, supabase);
+    const body = await request.json()
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Please log in to interact with posts." },
-        { status: 401 }
-      );
+    const action = String(body.action || "")
+    const postId = Number(body.postId)
+
+    if (!postId || !Number.isInteger(postId)) {
+      return response({ error: "Invalid postId." }, 400)
     }
 
     if (action === "like") {
@@ -124,79 +122,85 @@ export async function POST(request: NextRequest) {
         .upsert(
           {
             post_id: postId,
-            user_id: user.id,
+            user_id: auth.user.id,
           },
           {
             onConflict: "post_id,user_id",
             ignoreDuplicates: true,
           }
-        );
+        )
 
-      if (error) throw error;
-
-      return NextResponse.json({ liked: true });
+      if (error) {
+        console.error("LIKE ERROR:", error)
+        return response({ error: error.message }, 500)
+      }
     }
 
-    if (action === "unlike") {
+    else if (action === "unlike") {
       const { error } = await supabase
         .from("post_likes")
         .delete()
         .eq("post_id", postId)
-        .eq("user_id", user.id);
+        .eq("user_id", auth.user.id)
 
-      if (error) throw error;
-
-      return NextResponse.json({ liked: false });
+      if (error) {
+        console.error("UNLIKE ERROR:", error)
+        return response({ error: error.message }, 500)
+      }
     }
 
-    if (action === "comment") {
-      const content = String(body?.content || "").trim();
+    else if (action === "comment") {
+      const content = String(body.content || "").trim()
 
       if (!content) {
-        return NextResponse.json(
-          { error: "Comment cannot be empty." },
-          { status: 400 }
-        );
+        return response({ error: "Comment cannot be empty." }, 400)
       }
 
       if (content.length > 1000) {
-        return NextResponse.json(
-          { error: "Comment must be 1000 characters or less." },
-          { status: 400 }
-        );
+        return response({ error: "Comment is too long." }, 400)
       }
 
-      const { data, error } = await supabase
+      const { data: comment, error } = await supabase
         .from("post_comments")
         .insert({
           post_id: postId,
-          user_id: user.id,
+          user_id: auth.user.id,
           content,
         })
         .select("id, post_id, user_id, content, created_at")
-        .single();
+        .single()
 
-      if (error) throw error;
+      if (error) {
+        console.error("COMMENT ERROR:", error)
+        return response({ error: error.message }, 500)
+      }
 
-      return NextResponse.json({
-        comment: data,
-      });
+      return response({
+        success: true,
+        comment,
+      })
     }
 
-    return NextResponse.json(
-      { error: "Unsupported interaction." },
-      { status: 400 }
-    );
-  } catch (error: any) {
-    console.error("MOVETI post interaction error:", error);
+    else {
+      return response({ error: "Invalid interaction action." }, 400)
+    }
 
-    return NextResponse.json(
-      {
-        error:
-          error?.message ||
-          "Unable to complete this interaction.",
-      },
-      { status: 500 }
-    );
+    const { count, error: countError } = await supabase
+      .from("post_likes")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", postId)
+
+    if (countError) {
+      return response({ error: countError.message }, 500)
+    }
+
+    return response({
+      success: true,
+      liked: action === "like",
+      likes: count ?? 0,
+    })
+  } catch (error) {
+    console.error("POST INTERACTIONS POST ERROR:", error)
+    return response({ error: "Unable to process interaction." }, 500)
   }
 }
