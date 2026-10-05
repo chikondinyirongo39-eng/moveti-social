@@ -211,7 +211,7 @@ export default function ArtistDashboard() {
         <div className="mt-6 grid grid-cols-3 gap-2">
 
           <a
-            href="/"
+            href="/feed"
             className="rounded-xl bg-white p-3 text-center text-sm font-bold shadow-sm"
           >
             🏠 Home
