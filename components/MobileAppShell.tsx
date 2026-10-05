@@ -91,6 +91,13 @@ export default function MobileAppShell({ children }: Props) {
               <span className="text-[22px]">◎</span>
               <span className="text-[10px] font-semibold">Discover</span>
             </Link>
+          <Link
+            href="/music"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">♫</span>
+            Music
+          </Link>
 
             <Link
               href="/create"

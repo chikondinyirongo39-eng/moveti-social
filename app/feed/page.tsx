@@ -177,6 +177,13 @@ export default function FeedPage() {
               >
                 Discover Creators
               </Link>
+          <Link
+            href="/music"
+            className="flex flex-col items-center gap-1 text-[10px] font-semibold text-white/40"
+          >
+            <span className="text-xl">♫</span>
+            Music
+          </Link>
             </div>
           )}
 
