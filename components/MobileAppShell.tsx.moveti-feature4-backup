@@ -39,7 +39,7 @@ export default function MobileAppShell({ children }: Props) {
     <div className="min-h-screen bg-[#f0f2f5] text-[#050505]">
       <div className="mx-auto min-h-screen w-full max-w-[520px] bg-white shadow-sm">
         <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b bg-white px-4">
-          <Link href="/feed" className="text-2xl font-black tracking-tight">
+          <Link href="/" className="text-2xl font-black tracking-tight">
             MOVETI
           </Link>
 
@@ -82,7 +82,7 @@ export default function MobileAppShell({ children }: Props) {
 
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white">
           <div className="mx-auto grid h-16 max-w-[520px] grid-cols-5 items-center px-1">
-            <Link href="/feed" className="flex flex-col items-center justify-center gap-0.5">
+            <Link href="/" className="flex flex-col items-center justify-center gap-0.5">
               <span className="text-[22px]">⌂</span>
               <span className="text-[10px] font-semibold">Home</span>
             </Link>
