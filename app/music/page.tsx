@@ -90,7 +90,7 @@ export default function MusicPage() {
   const newReleases = filteredReleases.slice(0, 8)
 
   return (
-    <main className="min-h-screen bg-black pb-28 text-white">
+    <main className="min-h-screen bg-black bg-black pb-28 text-white">
       <div className="mx-auto min-h-screen w-full max-w-2xl">
 
         {/* Header */}
