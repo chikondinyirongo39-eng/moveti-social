@@ -4,15 +4,17 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 
-type Profile = {
+type ArtistProfile = {
   id: string;
-  username: string;
-  display_name: string;
+  user_id?: string | null;
+  username?: string | null;
+  name?: string | null;
   avatar_url?: string | null;
+  bio?: string | null;
 };
 
 export default function ProfilesPage() {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<ArtistProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,9 +22,9 @@ export default function ProfilesPage() {
       const supabase = createClient();
 
       const { data } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url')
-        .order('display_name', { ascending: true });
+        .from('artist_profiles')
+        .select('id, user_id, username, name, avatar_url, bio')
+        .order('name', { ascending: true });
 
       setProfiles(data || []);
       setLoading(false);
@@ -32,9 +34,9 @@ export default function ProfilesPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#07090d] px-5 py-8 text-white">
+    <main className="min-h-screen bg-[#050507] px-5 py-8 text-white">
       <div className="mx-auto max-w-4xl">
-        <Link href="/" className="text-sm text-gray-400">
+        <Link href="/feed" className="text-sm text-white/45">
           ← Home
         </Link>
 
@@ -42,53 +44,71 @@ export default function ProfilesPage() {
           People on MOVETI
         </h1>
 
-        <p className="mt-2 text-gray-400">
+        <p className="mt-2 text-white/45">
           Discover artists and creators.
         </p>
 
         {loading ? (
-          <div className="mt-8 rounded-2xl bg-[#11151d] p-6 text-gray-400">
-            Loading profiles...
+          <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white/45">
+            Loading artists...
           </div>
         ) : profiles.length === 0 ? (
-          <div className="mt-8 rounded-2xl bg-[#11151d] p-8 text-center text-gray-400">
-            No profiles found yet.
+          <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center">
+            <div className="text-5xl">🎤</div>
+            <h2 className="mt-4 text-xl font-black">
+              No artists found yet
+            </h2>
+            <p className="mt-2 text-sm text-white/40">
+              Artist profiles will appear here when they are created.
+            </p>
           </div>
         ) : (
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {profiles.map((profile) => (
-              <Link
-                key={profile.id}
-                href={`/profiles/${profile.id}`}
-                className="rounded-2xl bg-[#11151d] p-5 transition hover:bg-[#181d27]"
-              >
-                <div className="flex items-center gap-4">
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt=""
-                      className="h-16 w-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-2xl font-black text-black">
-                      {(profile.display_name || profile.username || 'M')
-                        .charAt(0)
-                        .toUpperCase()}
+            {profiles.map((artist) => {
+              const profileId = artist.user_id || artist.id;
+              const name = artist.name || artist.username || 'MOVETI Artist';
+
+              return (
+                <Link
+                  key={artist.id}
+                  href={`/profiles/${profileId}`}
+                  className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.08]"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-[#8A2BE2] to-[#4169E1]">
+                      {artist.avatar_url ? (
+                        <img
+                          src={artist.avatar_url}
+                          alt={name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="grid h-full place-items-center text-2xl font-black">
+                          {name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  <div>
-                    <h2 className="font-bold">
-                      {profile.display_name || profile.username}
-                    </h2>
+                    <div className="min-w-0">
+                      <h2 className="truncate font-bold">
+                        {name}
+                        <span className="ml-2 inline-grid h-5 w-5 place-items-center rounded-full bg-gradient-to-r from-[#8A2BE2] to-[#4169E1] text-[10px]">
+                          ✓
+                        </span>
+                      </h2>
 
-                    <p className="text-sm text-gray-400">
-                      @{profile.username}
-                    </p>
+                      <p className="mt-1 text-sm text-white/40">
+                        @{artist.username || 'moveti_artist'}
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-[#FF1493]">
+                        Artist • Malawi
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
